@@ -1,0 +1,140 @@
+import tkinter as tk
+from tkinter import filedialog
+import requests
+import openpyxl
+import time
+from tkinter import ttk
+import os
+
+class Envioemmassa:
+    def __init__(self, janela):
+        
+        self.janela = janela
+        self.janela.title("Comandos")
+        
+        self.rotulo_porcentagem = tk.Label(janela, text="Aguardando entrada" )
+        self.rotulo_porcentagem.grid(row=0, column=0, columnspan=2)
+
+        self.botao_arquivo = tk.Button(janela, text="Escolher Arquivo", command=self.escolher_arquivo)
+        self.botao_arquivo.grid(row=1, column=0, pady=5, columnspan=2)
+        
+        self.rotulo_nome_arquivo = tk.Label(janela, text="")
+        self.rotulo_nome_arquivo.grid(row=2, column=0, columnspan=2, pady=5)
+
+        self.label_tamanho = tk.Label(janela, text="Linhas do Excel:")
+        self.label_tamanho.grid(row=3, column=0, pady=1)
+
+        self.entrada_tamanho = tk.Entry(janela)
+        self.entrada_tamanho.grid(row=3, column=1)
+        
+        self.label_intervalo = tk.Label(janela, text="Intervalo entre comandos:")
+        self.label_intervalo.grid(row=4, column=0, pady=1)
+
+        self.entrada_intervalo = tk.Entry(janela)
+        self.entrada_intervalo.grid(row=4, column=1)
+
+        self.botao_enviar = tk.Button(janela, text="Enviar", command=self.enviar_comandos)
+        self.botao_enviar.grid(row=5, column=0, columnspan=2, pady=10)
+
+
+        self.placa_desenvolvido_por = tk.Label(janela, text="Desenvolvido por João Pedro")
+        self.placa_desenvolvido_por.grid(row=6, column=0, sticky=tk.SW, pady=(0, 0), padx=(1, 0))
+
+    def escolher_arquivo(self):
+        self.arquivo = filedialog.askopenfilename(defaultextension=".xlsx", filetypes=[("Arquivos Excel", "*.xlsx")])
+        print("Arquivo selecionado:", self.arquivo)
+
+        nome_arquivo = os.path.basename(self.arquivo)
+        self.rotulo_nome_arquivo.config(text=f"Arquivo Selecionado: {nome_arquivo}")
+
+    def enviar_comandos(self):
+        tamanho_texto = self.entrada_tamanho.get()
+        tamanho = int(tamanho_texto)
+        
+        intervalo_comando = self.entrada_intervalo.get()
+        intervalo = int(intervalo_comando)
+        tempototal = intervalo*tamanho
+        
+        
+        workbook = openpyxl.load_workbook(self.arquivo)
+        sheet = workbook.active
+
+        coluna1 = [str(cell.value) for cell in sheet['A']]
+        coluna2 = [str(cell.value) for cell in sheet['B']]
+
+        linha = 1
+        
+        while linha <= tamanho:
+            
+            
+            valor_coluna1 = coluna1[linha - 1] if linha <= len(coluna1) else None
+            valor_coluna2 = coluna2[linha - 1] if linha <= len(coluna2) else None
+
+            print(f"Valor da Coluna 1: {valor_coluna1}, Valor da Coluna 2: {valor_coluna2}")
+
+            sender_id = "seu_sender_id"
+            phone_number = valor_coluna2
+            message = valor_coluna1
+
+            url = "https://sms.comtele.com.br/api/v2/send"
+
+            payload = {
+                "Sender": sender_id,
+                "Receivers": phone_number,
+                "Content": message
+            }
+
+            headers = {
+                'content-type': "application/json",
+                'auth-key': "5d2af943-9cb7-4de8-890d-1f0b3464d7fb"
+            }
+
+            response = requests.request("POST", url, json=payload, headers=headers)
+            print(response.text)
+
+            time.sleep(intervalo)
+            print(linha)
+            self.janela.update_idletasks()
+
+            linha += 1
+
+
+class janela:
+    
+    def __init__(self, janela):
+        
+        self.janela = janela
+        self.janela.title("Main")
+        
+        self.botao_arquivo = tk.Button(janela, text="Envio em massa", command=self.enviar_massa)
+        self.botao_arquivo.grid(row=0, column=0, pady=5, columnspan=5)
+        
+        self.botao_arquivo = tk.Button(janela, text="Envio de SMS")
+        self.botao_arquivo.grid(row=1, column=1,padx=10 ,pady=5, columnspan=2)
+        
+    
+    def enviar_massa(self):
+        janela_principal = tk.Tk()
+        app = Envioemmassa(janela_principal)
+
+        for i in range(7):
+            janela_principal.grid_rowconfigure(i, weight=1)
+            janela_principal.grid_columnconfigure(i, weight=1)
+
+        janela_principal.geometry("270x260")
+        janela_principal.mainloop()
+        
+        
+           
+
+if __name__ == "__main__":
+    
+    janela2 = tk.Tk()
+    app = janela(janela2)
+    
+    for i in range(7):
+        janela2.grid_rowconfigure(i, weight=1)
+        janela2.grid_columnconfigure(i, weight=1)
+
+    janela2.geometry("300x300")
+    janela2.mainloop()
